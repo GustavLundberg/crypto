@@ -1,0 +1,25 @@
+To run a docker image with tensorflow, mounting the current directory to /tf/notebooks inside the container:
+sudo docker run --gpus all -p 8888:8888 -v $PWD:/tf/notebooks tensorflow/tensorflow:latest-gpu-jupyter
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+To run a docker image with a jupyter datascience environment (no-TF) - not clear if this is actually uses the GPU:
+sudo docker run --gpus all -p 8888:8888 -v /home/gustav/python/ml/recommenders/movielens/:/home/jovyan/work -v /home/gustav/python/ml/datasets/movielens/:/home/jovyan/work/dataset jupyter/datascience-notebook
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Created my own docker image from the tensorflow-gpu-jupyter one which also includes pandas (simply run pip install pandas in a shell inside the container and then commit it). This command below makes sure that also the dataset is mounted.
+sudo docker run --gpus all -p 8888:8888 -v $PWD:/tf/notebooks -v /home/gustav/python/ml/datasets:/tf/dataset tensorflow_gpu_jupyter_pandas
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+To run a container which has tensorboard enabled. Need to port forward 6006:6006 and then run some code from within the jupyter notebook, see below: (Note that the --privileged flag is needed to enable some features in tensorboard, e.g. without it it is not possible to see information on GPU usage)
+sudo docker run --gpus all -it -p 8888:8888 -p 6006:6006 -v $PWD:/tf/notebooks -v /home/gustav/python/ml/datasets:/tf/dataset --privileged tensorflow_gpu_jupyter_pandas_sklearn
+
+%load_ext tensorboard
+from tensorboard import notebook
+notebook.list() # View open TensorBoard instances
+%tensorboard --logdir ./logs --host 0.0.0.0
+
+If you instead want to open tensorboard directly in the browser, you can enter the container using 'sudo docker exec -it 5b58e9372b01 /bin/bash' and then run 'tensorboard --logdir ./logs --host 0.0.0.0'.
+May actually be able to go directly to http://0.0.0.0:6006/ without executing the /bin/bash as long as '%tensorboard --logdir ./logs --host 0.0.0.0' is run directly in the jupyter notebook.
